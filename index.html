@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Delivery Cost Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fdf6e3; /* light yellow */
+      color: #4b0082; /* deep purple */
+      text-align: center;
+      padding: 40px;
+    }
+
+    h2 {
+      color: #4b0082;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-weight: bold;
+      display: inline-block;
+      width: 180px;
+      text-align: right;
+      margin-right: 10px;
+    }
+
+    input, select {
+      padding: 6px;
+      margin-bottom: 15px;
+      border: 2px solid #4b0082;
+      border-radius: 5px;
+      background-color: #fffbe6;
+      color: #4b0082;
+      font-weight: bold;
+      width: 200px;
+    }
+
+    button {
+      background-color: #4b0082;
+      color: yellow;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background-color: #6a0dad;
+    }
+
+    #result {
+      margin-top: 25px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #4b0082;
+      background-color: #fffbe6;
+      display: inline-block;
+      padding: 10px 20px;
+      border: 2px solid #4b0082;
+      border-radius: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Delivery Cost Calculator</h2>
+
+  <!-- Time dropdown -->
+  <div class="form-group">
+    <label for="time">Delivery Time:</label>
+    <select id="time">
+      <option value="13">0 - 2 Hrs</option>
+      <option value="10">2 - 24 Hrs</option>
+      <option value="9">24 - 48 Hrs</option>
+      <option value="5">> 48 Hrs</option>
+      <option value="0">Failed Attempt</option>
+      <option value="10">Return (0 - 24 Hrs)</option>
+    </select>
+  </div>
+
+  <!-- Distance numeric -->
+  <div class="form-group">
+    <label for="distance">Distance (in meters):</label>
+    <input type="number" id="distance" placeholder="Enter distance in meters">
+  </div>
+
+  <!-- Volume numeric: Length, Breadth, Height -->
+  <div class="form-group">
+    <label for="length">Length (cm):</label>
+    <input type="number" id="length" placeholder="Enter length in cm">
+  </div>
+
+  <div class="form-group">
+    <label for="breadth">Breadth (cm):</label>
+    <input type="number" id="breadth" placeholder="Enter breadth in cm">
+  </div>
+
+  <div class="form-group">
+    <label for="height">Height (cm):</label>
+    <input type="number" id="height" placeholder="Enter height in cm">
+  </div>
+
+  <!-- Weight numeric -->
+  <div class="form-group">
+    <label for="weight">Weight (in Kg):</label>
+    <input type="number" id="weight" placeholder="Enter weight in Kg">
+  </div>
+
+  <button onclick="calculateCost()">Calculate</button>
+
+  <h3 id="result"></h3>
+
+  <script>
+    function calculateCost() {
+      let T = parseInt(document.getElementById("time").value);
+      let distance = parseFloat(document.getElementById("distance").value);
+      let length = parseFloat(document.getElementById("length").value);
+      let breadth = parseFloat(document.getElementById("breadth").value);
+      let height = parseFloat(document.getElementById("height").value);
+      let weight = parseFloat(document.getElementById("weight").value);
+
+      let D = 0, V = 0, W = 0;
+
+      // Map distance
+      if (distance > 200) {
+        D = 1;
+      }
+
+      // Map volume: if any side > 45 cm
+      if (length > 45 || breadth > 45 || height > 45) {
+        V = 1;
+      }
+
+      // Map weight
+      if (weight > 5) {
+        W = 1;
+      }
+
+      let total = 0;
+
+      if (T === 0) {
+        total = 0; // Failed attempt overrides everything
+      } else {
+        // Formula: Total = T + D*2 + V*(W+1)*2
+        total = T + (D * 2) + (V * (W + 1) * 2);
+      }
+
+      document.getElementById("result").innerText = "Total Cost = Rs. " + total;
+    }
+  </script>
+</body>
+</html>
