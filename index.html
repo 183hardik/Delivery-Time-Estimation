@@ -1,158 +1,216 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Delivery Cost Calculator</title>
+  <title>Kirana Delivery Dashboard</title>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #fdf6e3; /* light yellow */
-      color: #4b0082; /* deep purple */
-      text-align: center;
-      padding: 40px;
-    }
-
-    h2 {
-      color: #4b0082;
-      margin-bottom: 20px;
-    }
-
-    label {
-      font-weight: bold;
-      display: inline-block;
-      width: 180px;
-      text-align: right;
-      margin-right: 10px;
-    }
-
-    input, select {
-      padding: 6px;
-      margin-bottom: 15px;
-      border: 2px solid #4b0082;
-      border-radius: 5px;
-      background-color: #fffbe6;
-      color: #4b0082;
-      font-weight: bold;
-      width: 200px;
-    }
-
-    button {
-      background-color: #4b0082;
-      color: yellow;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-
-    button:hover {
-      background-color: #6a0dad;
-    }
-
-    #result {
-      margin-top: 25px;
-      font-size: 20px;
-      font-weight: bold;
-      color: #4b0082;
-      background-color: #fffbe6;
-      display: inline-block;
-      padding: 10px 20px;
-      border: 2px solid #4b0082;
-      border-radius: 8px;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background-color:#fff2e3; }
+    .container { display:flex; height:100vh; }
+    .left-panel { flex:1; padding:20px; overflow-y:auto; background:white; box-shadow: 2px 0 8px rgba(0,0,0,0.1);}
+    .right-panel { flex:1.2; position:relative; }
+    h2,h3 { color:#66104d; margin-top:0; }
+    label { display:block; margin-top:10px; font-weight:bold; }
+    input, select, button { margin-top:5px; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; }
+    button { background:#66104d; color:white; cursor:pointer; font-weight:bold; transition:0.3s; }
+    button:hover { background:#8a1d66; }
+    .parcel-list { 
+  display:flex; 
+  flex-direction:column; 
+  gap:12px; 
+  max-height:450px; /* increased height for more space */ 
+  overflow-y:auto; 
+  margin-top:10px; 
+  padding-right:5px; /* optional: avoid scrollbar overlap */ 
+}
+    .parcel-card { background:#fff2e3; border-left:6px solid #66104d; border-radius:8px; padding:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    .parcel-card strong { color:#66104d; }
+    .totals { margin-top:20px; padding:12px; border-radius:8px; background:#fff2e3; }
+    .totals p { margin:5px 0; font-weight:bold; color:#66104d; }
+    #map { height:100%; width:100%; border-left:1px solid #ccc; }
+    .add-parcel { margin-top:20px; padding:12px; background:#fff2e3; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
-  <h2>Delivery Cost Calculator</h2>
 
-  <!-- Time dropdown -->
-  <div class="form-group">
-    <label for="time">Delivery Time:</label>
-    <select id="time">
-      <option value="13">0 - 2 Hrs</option>
-      <option value="10">2 - 24 Hrs</option>
-      <option value="9">24 - 48 Hrs</option>
-      <option value="5">> 48 Hrs</option>
-      <option value="0">Failed Attempt</option>
-      <option value="10">Return (0 - 24 Hrs)</option>
-    </select>
+<div class="container">
+  <div class="left-panel">
+    <h2>Kirana Parcel Dashboard</h2>
+    <div class="parcel-list" id="parcelList"></div>
+
+    <div class="totals">
+      <h3>Total Day's Payout</h3>
+      <p>Total if ≤2 Hrs: <span id="p2h">0</span> Rs</p>
+      <p>Total if ≤24 Hrs: <span id="p24h">0</span> Rs</p>
+      <p>Total if ≤48 Hrs: <span id="p48h">0</span> Rs</p>
+      <p>Total if ≥48 Hrs: <span id="p48p">0</span> Rs</p>
+    </div>
+
+    <div class="add-parcel">
+      <h3>Add New Parcel</h3>
+      <label>User Name:</label>
+      <input type="text" id="newUser" placeholder="Enter user name">
+
+      <label>Address:</label>
+      <input type="text" id="newAddress" placeholder="Enter address">
+
+      <label>Latitude:</label>
+      <input type="number" id="newLat" placeholder="Enter latitude" step="0.0001">
+
+      <label>Longitude:</label>
+      <input type="number" id="newLng" placeholder="Enter longitude" step="0.0001">
+
+      <label>Distance (m):</label>
+      <input type="number" id="newDistance" placeholder="Distance in meters">
+
+      <label>Volume (cm):</label>
+      <input type="text" id="newVolume" placeholder="L*W*H, e.g., 45*25*5">
+
+      <label>Weight (kg):</label>
+      <input type="number" id="newWeight" placeholder="Weight in kg">
+
+      <button onclick="addParcel()">Add Parcel</button>
+    </div>
   </div>
 
-  <!-- Distance numeric -->
-  <div class="form-group">
-    <label for="distance">Distance (in meters):</label>
-    <input type="number" id="distance" placeholder="Enter distance in meters">
+  <div class="right-panel">
+    <div id="map"></div>
   </div>
+</div>
 
-  <!-- Volume numeric: Length, Breadth, Height -->
-  <div class="form-group">
-    <label for="length">Length (cm):</label>
-    <input type="number" id="length" placeholder="Enter length in cm">
-  </div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+const kiranaLat = 29.864;
+const kiranaLng = 77.888;
 
-  <div class="form-group">
-    <label for="breadth">Breadth (cm):</label>
-    <input type="number" id="breadth" placeholder="Enter breadth in cm">
-  </div>
+function parseVolume(volStr){ return volStr.split("*").map(Number); }
 
-  <div class="form-group">
-    <label for="height">Height (cm):</label>
-    <input type="number" id="height" placeholder="Enter height in cm">
-  </div>
+const names = ["Aarav","Isha","Rohan","Priya","Kabir","Ananya","Aditya","Sanya"];
+const streets = ["MG Road","Park Street","Linking Road","Church Street","Brigade Road"];
+function randomVolume(){ return `${Math.floor(Math.random()*51)+10}*${Math.floor(Math.random()*51)+5}*${Math.floor(Math.random()*31)+5}`; }
 
-  <!-- Weight numeric -->
-  <div class="form-group">
-    <label for="weight">Weight (in Kg):</label>
-    <input type="number" id="weight" placeholder="Enter weight in Kg">
-  </div>
+let parcels=[];
+for(let i=0;i<24;i++){
+  parcels.push({
+    id:"P"+(1000+i),
+    user:names[Math.floor(Math.random()*names.length)],
+    address:Math.floor(Math.random()*200+1)+" "+streets[Math.floor(Math.random()*streets.length)],
+    distance:Math.floor(Math.random()*401),
+    volume:randomVolume(),
+    weight:parseFloat((Math.random()*10+1).toFixed(1)),
+    lat:kiranaLat + (Math.random()-0.5)/100,
+    lng:kiranaLng + (Math.random()-0.5)/100,
+    selected:false
+  });
+}
 
-  <button onclick="calculateCost()">Calculate</button>
+let map=L.map('map').setView([kiranaLat,kiranaLng],15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+let markers=[];
+let routeLine=null;
 
-  <h3 id="result"></h3>
+function renderParcels(){
+  const list=document.getElementById("parcelList");
+  list.innerHTML="";
+  let p2h=0,p24h=0,p48h=0,p48p=0;
 
-  <script>
-    function calculateCost() {
-      let T = parseInt(document.getElementById("time").value);
-      let distance = parseFloat(document.getElementById("distance").value);
-      let length = parseFloat(document.getElementById("length").value);
-      let breadth = parseFloat(document.getElementById("breadth").value);
-      let height = parseFloat(document.getElementById("height").value);
-      let weight = parseFloat(document.getElementById("weight").value);
+  parcels.forEach((p,index)=>{
+    const dims=parseVolume(p.volume);
+    const D = p.distance>200?1:0;
+    const V = dims.some(d=>d>45)?1:0;
+    const W = p.weight>5?1:0;
 
-      let D = 0, V = 0, W = 0;
+    p2h += 13+D*2+V*(W+1)*2;
+    p24h += 10+D*2+V*(W+1)*2;
+    p48h += 9+D*2+V*(W+1)*2;
+    p48p += 5+D*2+V*(W+1)*2;
 
-      // Map distance
-      if (distance > 200) {
-        D = 1;
-      }
+    const card=document.createElement("div");
+    card.className="parcel-card";
+    card.innerHTML=`
+      <input type="checkbox" id="chk${index}" ${p.selected?'checked':''}> 
+      <strong>${p.id}</strong> - ${p.user}<br>
+      Address: ${p.address}<br>
+      Lat: ${p.lat.toFixed(5)}, Lng: ${p.lng.toFixed(5)}<br>
+      Distance: ${p.distance} m<br>
+      Volume: ${p.volume} cm<br>
+      Weight: ${p.weight} kg
+    `;
+    list.appendChild(card);
+    document.getElementById(`chk${index}`).addEventListener('change', function(){
+      p.selected=this.checked;
+      updateMap();
+    });
+  });
 
-      // Map volume: if any side > 45 cm
-      if (length > 45 || breadth > 45 || height > 45) {
-        V = 1;
-      }
+  document.getElementById("p2h").innerText=p2h;
+  document.getElementById("p24h").innerText=p24h;
+  document.getElementById("p48h").innerText=p48h;
+  document.getElementById("p48p").innerText=p48p;
 
-      // Map weight
-      if (weight > 5) {
-        W = 1;
-      }
+  updateMap();
+}
 
-      let total = 0;
+function addParcel(){
+  const user=document.getElementById("newUser").value||"Anonymous";
+  const address=document.getElementById("newAddress").value||"Unknown Street";
+  const distance=parseInt(document.getElementById("newDistance").value);
+  const volume=document.getElementById("newVolume").value;
+  const weight=parseFloat(document.getElementById("newWeight").value);
+  const lat=parseFloat(document.getElementById("newLat").value);
+  const lng=parseFloat(document.getElementById("newLng").value);
 
-      if (T === 0) {
-        total = 0; // Failed attempt overrides everything
-      } else {
-        // Formula: Total = T + D*2 + V*(W+1)*2
-        total = T + (D * 2) + (V * (W + 1) * 2);
-      }
+  parcels.push({id:"P"+(1000+parcels.length),user,address,distance,volume,weight,lat,lng,selected:false});
+  renderParcels();
+}
 
-      document.getElementById("result").innerText = "Total Cost = Rs. " + total;
+// Nearest neighbor route
+function updateMap(){
+  if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
+  markers.forEach(m=>map.removeLayer(m));
+  markers=[];
+
+  const selected = parcels.filter(p=>p.selected);
+  if(selected.length===0) return;
+
+  const remaining = [...selected];
+  const path=[];
+  let current={lat:kiranaLat,lng:kiranaLng};
+  while(remaining.length>0){
+    remaining.sort((a,b)=>{
+      const da=Math.hypot(a.lat-current.lat,a.lng-current.lng);
+      const db=Math.hypot(b.lat-current.lat,b.lng-current.lng);
+      return da-db;
+    });
+    const next=remaining.shift();
+    path.push(next);
+    current=next;
+  }
+
+  const latlngs=[[kiranaLat,kiranaLng],...path.map(p=>[p.lat,p.lng])];
+  routeLine=L.polyline(latlngs,{color:'purple'}).addTo(map);
+  map.fitBounds(routeLine.getBounds().pad(0.2));
+
+  latlngs.forEach((pos,i)=>{
+    let popupText;
+    if(i===0){ popupText="Kirana Start"; }
+    else{
+      const p=path[i-1];
+      const dims=parseVolume(p.volume);
+      const D=p.distance>200?1:0;
+      const V=dims.some(d=>d>45)?1:0;
+      const W=p.weight>5?1:0;
+      const payout=13+D*2+V*(W+1)*2;
+      popupText=`${p.id} - ${p.user}<br>Distance:${p.distance}m<br>Volume:${p.volume}cm<br>Weight:${p.weight}kg<br>Payout: ${payout} Rs`;
     }
-  </script>
+    const m=L.marker(pos).addTo(map).bindPopup(popupText);
+    markers.push(m);
+  });
+}
+
+renderParcels();
+</script>
+
 </body>
 </html>
+
