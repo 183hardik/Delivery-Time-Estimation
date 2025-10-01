@@ -5,30 +5,42 @@
   <meta charset="utf-8" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background-color:#fff2e3; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:0; background-color:#fff2e3; }
     .container { display:flex; height:100vh; }
-    .left-panel { flex:1; padding:20px; overflow-y:auto; background:white; box-shadow: 2px 0 8px rgba(0,0,0,0.1);}
+    .left-panel { flex:1; padding:20px; overflow-y:auto; background:#fef6f0; box-shadow: 2px 0 12px rgba(0,0,0,0.15); border-right:1px solid #ddd;}
     .right-panel { flex:1.2; position:relative; }
     h2,h3 { color:#66104d; margin-top:0; }
     label { display:block; margin-top:10px; font-weight:bold; }
-    input, select, button { margin-top:5px; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; }
+    input, select, button { margin-top:5px; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; font-size:14px; }
     button { background:#66104d; color:white; cursor:pointer; font-weight:bold; transition:0.3s; }
     button:hover { background:#8a1d66; }
     .parcel-list { 
-  display:flex; 
-  flex-direction:column; 
-  gap:12px; 
-  max-height:450px; /* increased height for more space */ 
-  overflow-y:auto; 
-  margin-top:10px; 
-  padding-right:5px; /* optional: avoid scrollbar overlap */ 
-}
-    .parcel-card { background:#fff2e3; border-left:6px solid #66104d; border-radius:8px; padding:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+      display:flex; 
+      flex-direction:column; 
+      gap:14px; 
+      max-height:450px; 
+      overflow-y:auto; 
+      margin-top:10px; 
+      padding-right:5px; 
+    }
+    .parcel-card-container { display:flex; flex-direction:column; }
+    .select-text { font-size:12px; color:#66104d; margin-bottom:4px; }
+    .parcel-card { 
+      background:#fff2e3; 
+      border-left:6px solid #66104d; 
+      border-radius:10px; 
+      padding:14px; 
+      box-shadow:0 3px 8px rgba(0,0,0,0.1); 
+      cursor:pointer;
+      transition:0.2s all;
+    }
+    .parcel-card:hover { background:#ffe5d0; transform: translateY(-2px); }
+    .parcel-card.selected { background:#ffd2b8; border-left:6px solid #8a1d66; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
     .parcel-card strong { color:#66104d; }
-    .totals { margin-top:20px; padding:12px; border-radius:8px; background:#fff2e3; }
-    .totals p { margin:5px 0; font-weight:bold; color:#66104d; }
+    .totals { margin-top:20px; padding:14px; border-radius:10px; background:#fff2e3; box-shadow:0 3px 8px rgba(0,0,0,0.05);}
+    .totals p { margin:6px 0; font-weight:bold; color:#66104d; }
     #map { height:100%; width:100%; border-left:1px solid #ccc; }
-    .add-parcel { margin-top:20px; padding:12px; background:#fff2e3; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    .add-parcel { margin-top:20px; padding:14px; background:#fff2e3; border-radius:10px; box-shadow:0 3px 8px rgba(0,0,0,0.05); }
   </style>
 </head>
 <body>
@@ -89,8 +101,31 @@ const names = ["Aarav","Isha","Rohan","Priya","Kabir","Ananya","Aditya","Sanya"]
 const streets = ["MG Road","Park Street","Linking Road","Church Street","Brigade Road"];
 function randomVolume(){ return `${Math.floor(Math.random()*51)+10}*${Math.floor(Math.random()*51)+5}*${Math.floor(Math.random()*31)+5}`; }
 
+const deliveryPoints = [
+  {lat:29.8710, lng:77.8942},
+  {lat:29.8725, lng:77.8918},
+  {lat:29.8708, lng:77.8965},
+  {lat:29.8732, lng:77.8981},
+  {lat:29.8699, lng:77.8927},
+  {lat:29.8687, lng:77.8954},
+  {lat:29.8740, lng:77.8995},
+  {lat:29.8669, lng:77.8902},
+  {lat:29.8678, lng:77.8939},
+  {lat:29.8751, lng:77.8968},
+  {lat:29.8719, lng:77.8972},
+  {lat:29.8681, lng:77.8912},
+  {lat:29.8722, lng:77.8930},
+  {lat:29.8738, lng:77.8959},
+  {lat:29.8695, lng:77.8977},
+  {lat:29.8702, lng:77.8991},
+  {lat:29.8745, lng:77.8925},
+  {lat:29.8673, lng:77.8948},
+  {lat:29.8716, lng:77.8905},
+  {lat:29.8690, lng:77.8983}
+];
+
 let parcels=[];
-for(let i=0;i<24;i++){
+for(let i=0;i<deliveryPoints.length;i++){
   parcels.push({
     id:"P"+(1000+i),
     user:names[Math.floor(Math.random()*names.length)],
@@ -98,8 +133,8 @@ for(let i=0;i<24;i++){
     distance:Math.floor(Math.random()*401),
     volume:randomVolume(),
     weight:parseFloat((Math.random()*10+1).toFixed(1)),
-    lat:kiranaLat + (Math.random()-0.5)/100,
-    lng:kiranaLng + (Math.random()-0.5)/100,
+    lat:deliveryPoints[i].lat,
+    lng:deliveryPoints[i].lng,
     selected:false
   });
 }
@@ -125,10 +160,16 @@ function renderParcels(){
     p48h += 9+D*2+V*(W+1)*2;
     p48p += 5+D*2+V*(W+1)*2;
 
-    const card=document.createElement("div");
-    card.className="parcel-card";
+    const container = document.createElement("div");
+    container.className = "parcel-card-container";
+
+    const selectText = document.createElement("div");
+    selectText.className = "select-text";
+    selectText.innerText = "Click to select";
+
+    const card = document.createElement("div");
+    card.className = "parcel-card"+(p.selected?" selected":"");
     card.innerHTML=`
-      <input type="checkbox" id="chk${index}" ${p.selected?'checked':''}> 
       <strong>${p.id}</strong> - ${p.user}<br>
       Address: ${p.address}<br>
       Lat: ${p.lat.toFixed(5)}, Lng: ${p.lng.toFixed(5)}<br>
@@ -136,11 +177,15 @@ function renderParcels(){
       Volume: ${p.volume} cm<br>
       Weight: ${p.weight} kg
     `;
-    list.appendChild(card);
-    document.getElementById(`chk${index}`).addEventListener('change', function(){
-      p.selected=this.checked;
+    card.addEventListener('click', function(){
+      p.selected = !p.selected;
+      card.classList.toggle('selected');
       updateMap();
     });
+
+    container.appendChild(selectText);
+    container.appendChild(card);
+    list.appendChild(container);
   });
 
   document.getElementById("p2h").innerText=p2h;
@@ -164,7 +209,7 @@ function addParcel(){
   renderParcels();
 }
 
-// Nearest neighbor route
+// Nearest neighbor route with numbered markers
 function updateMap(){
   if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
   markers.forEach(m=>map.removeLayer(m));
@@ -193,7 +238,15 @@ function updateMap(){
 
   latlngs.forEach((pos,i)=>{
     let popupText;
-    if(i===0){ popupText="Kirana Start"; }
+    if(i===0){ 
+      popupText="Kirana Start"; 
+      const m=L.marker(pos,{icon:L.divIcon({
+        className:"custom-div-icon",
+        html:`<div style="background:#ff3333;color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">K</div>`,
+        iconSize:[24,24]
+      })}).addTo(map).bindPopup(popupText);
+      markers.push(m);
+    }
     else{
       const p=path[i-1];
       const dims=parseVolume(p.volume);
@@ -201,10 +254,15 @@ function updateMap(){
       const V=dims.some(d=>d>45)?1:0;
       const W=p.weight>5?1:0;
       const payout=13+D*2+V*(W+1)*2;
-      popupText=`${p.id} - ${p.user}<br>Distance:${p.distance}m<br>Volume:${p.volume}cm<br>Weight:${p.weight}kg<br>Payout: ${payout} Rs`;
+      popupText=`Step ${i}: ${p.id} - ${p.user}<br>Distance:${p.distance}m<br>Volume:${p.volume}cm<br>Weight:${p.weight}kg<br>Payout: ${payout} Rs`;
+
+      const m=L.marker(pos,{icon:L.divIcon({
+        className:"custom-div-icon",
+        html:`<div style="background:#66104d;color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">${i}</div>`,
+        iconSize:[24,24]
+      })}).addTo(map).bindPopup(popupText);
+      markers.push(m);
     }
-    const m=L.marker(pos).addTo(map).bindPopup(popupText);
-    markers.push(m);
   });
 }
 
@@ -213,5 +271,6 @@ renderParcels();
 
 </body>
 </html>
+
 
 
