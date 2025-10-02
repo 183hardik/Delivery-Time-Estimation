@@ -4,64 +4,50 @@
   <title>Kirana Delivery Dashboard</title>
   <meta charset="utf-8" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
   <style>
     body { font-family: Arial, sans-serif; margin:0; padding:0; background-color:#fff2e3; }
     .container { display:flex; height:100vh; }
     .left-panel { flex:1; padding:20px; overflow-y:auto; background:white; box-shadow: 2px 0 8px rgba(0,0,0,0.1);}
     .right-panel { flex:1.2; position:relative; }
     h2,h3 { color:#66104d; margin-top:0; }
-    .kirana-info { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; }
-    .info-box { padding:6px 12px; border-radius:6px; font-weight:bold; color:white; font-size:14px; min-width:150px; text-align:center; }
-    .cash-box { background:#28a745; }
-    .lmd-box { background:#ffc107; color:#66104d; }
     label { display:block; margin-top:10px; font-weight:bold; }
     input, select, button { margin-top:5px; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; }
     button { background:#66104d; color:white; cursor:pointer; font-weight:bold; transition:0.3s; }
     button:hover { background:#8a1d66; }
-    .parcel-summary { font-weight:bold; margin-bottom:10px; color:#66104d; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .parcel-box { padding:4px 10px; border-radius:6px; color:white; font-weight:bold; font-size:14px; }
-    .delivery-box { background:#ff3333; }
-    .return-box { background:#0080ff; }
-    .parcel-list { 
-      display:flex; 
-      flex-direction:column; 
-      gap:12px; 
-      max-height:450px; 
-      overflow-y:auto; 
-      margin-top:10px; 
-      padding-right:5px;
-    }
-    .parcel-card { background:#fff2e3; border-left:6px solid #66104d; border-radius:8px; padding:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); cursor:pointer; transition:0.2s; }
+    .parcel-list { display:flex; flex-direction:column; gap:12px; max-height:450px; overflow-y:auto; margin-top:10px; padding-right:5px; }
+    .parcel-card { background:#fff2e3; border-left:6px solid #66104d; border-radius:8px; padding:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); cursor:pointer; }
     .parcel-card strong { color:#66104d; }
-    .parcel-card.selected { 
-      background:#ffcc99; 
-      border-left:6px solid #ff6600; 
-      box-shadow:0 4px 12px rgba(0,0,0,0.25);
-    }
-    .parcel-card.return { border-left:6px solid #0080ff; background:#e6f0ff; }
-    .parcel-card.return.selected { background:#99ccff; border-left:6px solid #0044cc; }
+    .parcel-card.selected { background:#ffe0f0; border-left:6px solid #ff3399; }
+    .parcel-card.return { background:#e3f2ff; border-left:6px solid #3399ff; }
+    .parcel-card.return.selected { background:#cce5ff; border-left:6px solid #0056b3; }
     .totals { margin-top:20px; padding:12px; border-radius:8px; background:#fff2e3; }
     .totals p { margin:5px 0; font-weight:bold; color:#66104d; }
     #map { height:100%; width:100%; border-left:1px solid #ccc; }
     .add-parcel { margin-top:20px; padding:12px; background:#fff2e3; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-    .click-text { color:#66104d; font-size:14px; margin-bottom:6px; font-style:italic; }
-    .summary-title { width:100%; font-size:16px; font-weight:bold; color:#66104d; margin-bottom:5px; }
-    .backend-box { background:#66104d; color:white; padding:8px 14px; border-radius:8px; font-weight:bold; text-align:center; margin-top:25px; font-size:16px; }
+    .stats { display:flex; gap:15px; margin:10px 0; }
+    .stat-box { padding:8px 14px; border-radius:6px; color:white; font-weight:bold; }
+    .stat-delivery { background:#ff3333; }
+    .stat-return { background:#3399ff; }
+    .info-boxes { display:flex; gap:15px; margin:10px 0; }
+    .info { flex:1; padding:8px 14px; border-radius:6px; background:#ffe6f0; color:#66104d; font-weight:bold; text-align:center; }
+    /* New Backend box style */
+    .backend-box { margin-top:20px; padding:12px; border-radius:8px; background:#66104d; color:white; font-weight:bold; text-align:center; font-size:16px; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
 
 <div class="container">
   <div class="left-panel">
-    <h2>Kirana A Dashboard</h2>
-    <div class="kirana-info">
-      <div class="info-box cash-box">COD Collection : ₹5,522</div>
-      <div class="info-box lmd-box">LMD helper will come in 1 day</div>
+    <h2>Kirana A Dashboard (Dense Urban Region)</h2>
+    <div class="info-boxes">
+      <div class="info">COD Collected : ₹ <span id="cash">5253</span></div>
+      <div class="info">LMD helper will come in <span id="days">1 day</span></div>
     </div>
-
-    <div class="parcel-summary">
-      <div class="summary-title">To be Delivered</div>
-      <div id="parcelSummary" style="display:flex; gap:10px; align-items:center;"></div>
+    <h3>To be Delivered</h3>
+    <div class="stats">
+      <div class="stat-box stat-delivery">Deliveries: <span id="deliveryCount">0</span></div>
+      <div class="stat-box stat-return">Returns: <span id="returnCount">0</span></div>
     </div>
 
     <div class="parcel-list" id="parcelList"></div>
@@ -74,7 +60,6 @@
       <p>Total if ≥48 Hrs: <span id="p48p">0</span> Rs</p>
     </div>
 
-    <!-- Backend Heading -->
     <div class="backend-box">Backend</div>
 
     <div class="add-parcel">
@@ -100,12 +85,6 @@
       <label>Weight (kg):</label>
       <input type="number" id="newWeight" placeholder="Weight in kg">
 
-      <label>Type:</label>
-      <select id="newType">
-        <option value="delivery">Delivery</option>
-        <option value="return">Return</option>
-      </select>
-
       <button onclick="addParcel()">Add Parcel</button>
     </div>
   </div>
@@ -115,8 +94,8 @@
   </div>
 </div>
 
-
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 <script>
 const kiranaLat = 29.864;
 const kiranaLng = 77.888;
@@ -128,8 +107,6 @@ const streets = ["MG Road","Park Street","Linking Road","Church Street","Brigade
 function randomVolume(){ return `${Math.floor(Math.random()*51)+10}*${Math.floor(Math.random()*51)+5}*${Math.floor(Math.random()*31)+5}`; }
 
 let parcels=[];
-
-// 24 delivery parcels
 for(let i=0;i<24;i++){
   parcels.push({
     id:"P"+(1000+i),
@@ -141,11 +118,9 @@ for(let i=0;i<24;i++){
     lat:kiranaLat + (Math.random()-0.5)/500,
     lng:kiranaLng + (Math.random()-0.5)/500,
     selected:false,
-    type:'delivery'
+    type:"delivery"
   });
 }
-
-// 4 return parcels
 for(let i=0;i<4;i++){
   parcels.push({
     id:"R"+(2000+i),
@@ -157,64 +132,58 @@ for(let i=0;i<4;i++){
     lat:kiranaLat + (Math.random()-0.5)/500,
     lng:kiranaLng + (Math.random()-0.5)/500,
     selected:false,
-    type:'return'
+    type:"return"
   });
 }
 
-let map=L.map('map').setView([kiranaLat,kiranaLng],15);
+let map=L.map('map').setView([kiranaLat,kiranaLng],16);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-let markers=[];
-let routeLine=null;
-
+let routeControl=null;
 
 function renderParcels(){
   const list=document.getElementById("parcelList");
   list.innerHTML="";
   let p2h=0,p24h=0,p48h=0,p48p=0;
-  
-  const deliveryCount = parcels.filter(p=>p.type==='delivery').length;
-  const returnCount = parcels.filter(p=>p.type==='return').length;
-  document.getElementById("parcelSummary").innerHTML = `
-    <div class="parcel-box delivery-box">Delivery Parcels: ${deliveryCount}</div>
-    <div class="parcel-box return-box">Return Parcels: ${returnCount}</div>
-  `;
+  let deliveryCount=0, returnCount=0;
 
   parcels.forEach((p,index)=>{
+    if(p.type==="delivery") deliveryCount++; else returnCount++;
+
     const dims=parseVolume(p.volume);
     const D = p.distance>200?1:0;
     const V = dims.some(d=>d>45)?1:0;
     const W = p.weight>5?1:0;
 
-    let base = p.type==='return'?10:13;
-    p2h += base+D*2+V*(W+1)*2;
-    p24h += 10+D*2+V*(W+1)*2;
-    p48h += 9+D*2+V*(W+1)*2;
-    p48p += 5+D*2+V*(W+1)*2;
+    let payout;
+    if(p.type==="return"){ payout=10; }
+    else{ payout=13+D*2+V*(W+1)*2; }
+
+    p2h += payout;
+    p24h += (p.type==="return"?10:10+D*2+V*(W+1)*2);
+    p48h += (p.type==="return"?10:9+D*2+V*(W+1)*2);
+    p48p += (p.type==="return"?10:5+D*2+V*(W+1)*2);
 
     const card=document.createElement("div");
-    card.className="parcel-card "+(p.type==='return'?'return':'');
-    if(p.selected) card.classList.add('selected');
-    card.innerHTML=`<div class="click-text">Click to select</div>
-      <strong>${p.id}</strong> - ${p.user}<br>
+    card.className="parcel-card "+(p.type==="return"?"return":"")+(p.selected?" selected":"");
+    card.innerHTML=`<strong>${p.id}</strong> - ${p.user}<br>
       Address: ${p.address}<br>
       Lat: ${p.lat.toFixed(5)}, Lng: ${p.lng.toFixed(5)}<br>
       Distance: ${p.distance} m<br>
       Volume: ${p.volume} cm<br>
-      Weight: ${p.weight} kg
-    `;
-    list.appendChild(card);
-
+      Weight: ${p.weight} kg`;
     card.addEventListener('click', function(){
-      p.selected = !p.selected;
-      card.classList.toggle('selected', p.selected);
-      updateMap();
+      p.selected=!p.selected;
+      renderParcels();
     });
+    list.appendChild(card);
   });
 
   document.getElementById("p2h").innerText=p2h;
   document.getElementById("p24h").innerText=p24h;
   document.getElementById("p48h").innerText=p48h;
   document.getElementById("p48p").innerText=p48p;
+  document.getElementById("deliveryCount").innerText=deliveryCount;
+  document.getElementById("returnCount").innerText=returnCount;
 
   updateMap();
 }
@@ -227,74 +196,55 @@ function addParcel(){
   const weight=parseFloat(document.getElementById("newWeight").value);
   const lat=parseFloat(document.getElementById("newLat").value);
   const lng=parseFloat(document.getElementById("newLng").value);
-  const type=document.getElementById("newType").value;
 
-  parcels.push({id:(type==='return'?'R':'P')+(1000+parcels.length),user,address,distance,volume,weight,lat,lng,selected:false,type:type});
+  parcels.push({id:"P"+(1000+parcels.length),user,address,distance,volume,weight,lat,lng,selected:false,type:"delivery"});
   renderParcels();
 }
 
-// Nearest neighbor route
 function updateMap(){
-  if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
-  markers.forEach(m=>map.removeLayer(m));
-  markers=[];
+  if(routeControl){ map.removeControl(routeControl); routeControl=null; }
 
-  const selected = parcels.filter(p=>p.selected);
+  const selected=parcels.filter(p=>p.selected);
   if(selected.length===0) return;
 
-  const remaining = [...selected];
-  const path=[];
-  let current={lat:kiranaLat,lng:kiranaLng};
-  while(remaining.length>0){
-    remaining.sort((a,b)=>{
-      const da=Math.hypot(a.lat-current.lat,a.lng-current.lng);
-      const db=Math.hypot(b.lat-current.lat,b.lng-current.lng);
-      return da-db;
-    });
-    const next=remaining.shift();
-    path.push(next);
-    current=next;
-  }
+  const waypoints=[L.latLng(kiranaLat,kiranaLng),...selected.map(p=>L.latLng(p.lat,p.lng))];
 
-  const latlngs=[[kiranaLat,kiranaLng],...path.map(p=>[p.lat,p.lng])];
-  routeLine=L.polyline(latlngs,{color:'purple'}).addTo(map);
-  map.fitBounds(routeLine.getBounds().pad(0.2));
-
-  latlngs.forEach((pos,i)=>{
-    let popupText;
-    if(i===0){ 
-      popupText="Kirana Start"; 
-      const m=L.marker(pos,{icon:L.divIcon({
+  routeControl=L.Routing.control({
+    waypoints: waypoints,
+    router: L.Routing.osrmv1({
+      serviceUrl: "https://router.project-osrm.org/route/v1",
+      profile: "foot",
+      routingOptions: { alternatives: false, overview: "full", steps: true }
+    }),
+    lineOptions: { styles: [{color:'purple',weight:4}] },
+    createMarker: function(i, wp, n){
+      if(i===0){
+        return L.marker(wp.latLng,{icon:L.divIcon({
+          className:"custom-div-icon",
+          html:`<div style="background:#ff3333;color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">K</div>`,
+          iconSize:[26,26]
+        })}).bindPopup("Kirana Start");
+      }
+      const parcel=selected[i-1];
+      const markerColor=parcel.type==="return"?"#3399ff":"#66104d";
+      return L.marker(wp.latLng,{icon:L.divIcon({
         className:"custom-div-icon",
-        html:`<div style="background:#ff3333;color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">K</div>`,
-        iconSize:[24,24]
-      })}).addTo(map).bindPopup(popupText);
-      markers.push(m);
-    } else {
-      const p=path[i-1];
-      const dims=parseVolume(p.volume);
-      const D=p.distance>200?1:0;
-      const V=dims.some(d=>d>45)?1:0;
-      const W=p.weight>5?1:0;
-      const payout = p.type==='return'?10+D*2+V*(W+1)*2:13+D*2+V*(W+1)*2;
-      popupText=`Step ${i}: ${p.id} - ${p.user}<br>Distance:${p.distance}m<br>Volume:${p.volume}cm<br>Weight:${p.weight}kg<br>Payout: ${payout} Rs`;
-
-      const color = p.type==='return'?'#0080ff':'#66104d';
-      const m=L.marker(pos,{icon:L.divIcon({
-        className:"custom-div-icon",
-        html:`<div style="background:${color};color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">${i}</div>`,
-        iconSize:[24,24]
-      })}).addTo(map).bindPopup(popupText);
-      markers.push(m);
-    }
-  });
+        html:`<div style="background:${markerColor};color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">${i}</div>`,
+        iconSize:[26,26]
+      })}).bindPopup(`${parcel.type==="return"?"Return":"Delivery"} - ${parcel.id}`);
+    },
+    addWaypoints: false,
+    draggableWaypoints: false,
+    fitSelectedRoutes: true,
+    show: false
+  }).addTo(map);
 }
 
 renderParcels();
 </script>
-
 </body>
 </html>
+
 
 
 
