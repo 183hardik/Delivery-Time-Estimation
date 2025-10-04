@@ -27,12 +27,17 @@
     .add-parcel { margin-top:20px; padding:12px; background:#fff2e3; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
     .stats { display:flex; gap:15px; margin:10px 0; }
     .stat-box { padding:8px 14px; border-radius:6px; color:white; font-weight:bold; }
-    .stat-delivery { background:#ff3333; }
+    .stat-delivery { background:#66104d; }
     .stat-return { background:#3399ff; }
     .info-boxes { display:flex; gap:15px; margin:10px 0; }
     .info { flex:1; padding:8px 14px; border-radius:6px; background:#ffe6f0; color:#66104d; font-weight:bold; text-align:center; }
-    /* New Backend box style */
     .backend-box { margin-top:20px; padding:12px; border-radius:8px; background:#66104d; color:white; font-weight:bold; text-align:center; font-size:16px; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
+    .call-btn { margin-top:8px; padding:6px 10px; background:#66104d; color:white; border:none; border-radius:5px; cursor:pointer; font-size:14px; }
+    .call-btn:hover { background:#218838; }
+    /* Kirana Scorecard */
+    .scorecard { margin:10px 0; padding:10px; border-radius:8px; background:#ffe6f0; color:#66104d; font-weight:bold; text-align:center; border:2px solid #66104d; }
+    /* Bonus Box */
+    .bonus-box { margin:10px 0; padding:10px; border-radius:8px; background:#e3ffe6; color:#006622; font-weight:bold; text-align:center; border:2px solid #00aa44; }
   </style>
 </head>
 <body>
@@ -44,6 +49,18 @@
       <div class="info">COD Collected : ₹ <span id="cash">5253</span></div>
       <div class="info">LMD helper will come in <span id="days">1 day</span></div>
     </div>
+
+    <div class="info-boxes">
+      <div class="info">This Week Payout : ₹ <span id="weekPayout">1425</span></div>
+      <div class="info">To be credited in <span id="creditDays">3 days</span></div>
+    </div>
+
+    <!-- Kirana Scorecard Rating -->
+    <div class="scorecard">Kirana Scorecard Rating: <span id="scoreRating">87/100</span></div>
+
+    <!-- Bonus Box -->
+    <div class="bonus-box">Complete <span id="remainingDeliveries">50</span> more deliveries to get the ₹<span id="bonusAmount">500</span> bonus</div>
+
     <h3>To be Delivered</h3>
     <div class="stats">
       <div class="stat-box stat-delivery">Deliveries: <span id="deliveryCount">0</span></div>
@@ -66,25 +83,18 @@
       <h3>Add New Parcel</h3>
       <label>User Name:</label>
       <input type="text" id="newUser" placeholder="Enter user name">
-
       <label>Address:</label>
       <input type="text" id="newAddress" placeholder="Enter address">
-
       <label>Latitude:</label>
       <input type="number" id="newLat" placeholder="Enter latitude" step="0.0001">
-
       <label>Longitude:</label>
       <input type="number" id="newLng" placeholder="Enter longitude" step="0.0001">
-
       <label>Distance (m):</label>
       <input type="number" id="newDistance" placeholder="Distance in meters">
-
       <label>Volume (cm):</label>
       <input type="text" id="newVolume" placeholder="L*W*H, e.g., 45*25*5">
-
       <label>Weight (kg):</label>
       <input type="number" id="newWeight" placeholder="Weight in kg">
-
       <button onclick="addParcel()">Add Parcel</button>
     </div>
   </div>
@@ -170,8 +180,10 @@ function renderParcels(){
       Lat: ${p.lat.toFixed(5)}, Lng: ${p.lng.toFixed(5)}<br>
       Distance: ${p.distance} m<br>
       Volume: ${p.volume} cm<br>
-      Weight: ${p.weight} kg`;
-    card.addEventListener('click', function(){
+      Weight: ${p.weight} kg<br>
+      <button class="call-btn">Click to Call</button>`;
+    card.addEventListener('click', function(e){
+      if(e.target.classList.contains("call-btn")) return;
       p.selected=!p.selected;
       renderParcels();
     });
@@ -236,7 +248,7 @@ function updateMap(){
     addWaypoints: false,
     draggableWaypoints: false,
     fitSelectedRoutes: true,
-    show: false
+    show: true
   }).addTo(map);
 }
 
@@ -244,6 +256,7 @@ renderParcels();
 </script>
 </body>
 </html>
+
 
 
 
